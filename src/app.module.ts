@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { TasksModule } from './tasks/tasks.module';
+import { TaskListsModule } from './task-lists/task-lists.module';
+import { BoardsModule } from './boards/boards.module';
 
 @Module({
   imports: [
@@ -19,6 +22,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         database: 'kaban-db',
       }),
     }),
+    TasksModule,
+    TaskListsModule,
+    BoardsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
