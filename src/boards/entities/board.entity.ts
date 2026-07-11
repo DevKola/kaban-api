@@ -13,7 +13,7 @@ export class Board {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', nullable: false })
+  @Column({ type: 'varchar', nullable: false, unique: true })
   name: string;
 
   @OneToMany(() => TaskList, (taskList) => taskList.board, { cascade: true })

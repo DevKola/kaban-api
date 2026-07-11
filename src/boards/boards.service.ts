@@ -20,20 +20,21 @@ export class BoardsService {
     const savedBoard = await this.boardRepository.save(board);
 
     const defaultLists = ['Todo', 'Doing', 'Done'];
-    for (const name of defaultLists) {
-      const list = this.taskListRepository.create({ name, board: savedBoard });
+    for (const [index, name] of defaultLists.entries()) {
+      const list = this.taskListRepository.create({
+        name,
+        position: index,
+        board: savedBoard,
+      });
       await this.taskListRepository.save(list);
     }
 
-    return this.boardRepository.findOne({
-      where: { id: savedBoard.id },
-      relations: { taskLists: true },
-    }) as Promise<Board>;
+    return this.findOne(savedBoard.id);
   }
 
   async findAll(): Promise<Board[]> {
     return this.boardRepository.find({
-      relations: { taskLists: true },
+      relations: { taskLists: { tasks: true } },
       order: { createdAt: 'DESC' },
     });
   }
@@ -45,34 +46,26 @@ export class BoardsService {
     });
 
     if (!board) {
-      throw new NotFoundException(`Board with id '${id}' not found`);
+      throw new NotFoundException(`Board not found`);
     }
 
     return board;
   }
 
   async update(id: string, updateBoardDto: UpdateBoardDto): Promise<Board> {
-    const board = await this.boardRepository.findOne({ where: { id } });
+    const board = await this.findOne(id);
 
-    if (!board) {
-      throw new NotFoundException(`Board with id '${id}' not found`);
+    if (updateBoardDto.name !== undefined) {
+      board.name = updateBoardDto.name;
     }
 
-    await this.boardRepository.update(id, updateBoardDto);
-    return this.boardRepository.findOne({
-      where: { id },
-      relations: { taskLists: true },
-    }) as Promise<Board>;
+    return this.boardRepository.save(board);
   }
 
   async remove(id: string): Promise<{ message: string }> {
-    const board = await this.boardRepository.findOne({ where: { id } });
-
-    if (!board) {
-      throw new NotFoundException(`Board with id '${id}' not found`);
-    }
+    const board = await this.findOne(id);
 
     await this.boardRepository.remove(board);
-    return { message: `Board '${board.name}' deleted successfully` };
+    return { message: `Board deleted successfully` };
   }
 }

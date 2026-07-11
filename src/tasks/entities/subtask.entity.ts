@@ -19,7 +19,10 @@ export class Subtask {
   @Column({ type: 'boolean', default: false })
   isCompleted: boolean;
 
-  @ManyToOne(() => Task, (task) => task.subtasks, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Task, (task) => task.subtasks, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
   task: Task;
 
   @CreateDateColumn()

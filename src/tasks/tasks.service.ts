@@ -37,16 +37,24 @@ export class TasksService {
       });
 
       if (!taskList) {
-        throw new NotFoundException(
-          `Task list with status/name '${createTaskDto.status}' not found on this board`,
-        );
+        throw new NotFoundException(`Task list not found on this board`);
       }
 
       taskListId = taskList.id;
     }
 
+    let position = createTaskDto.position;
+    if (position === undefined) {
+      const maxPositionTask = await this.taskRepository.findOne({
+        where: { taskList: { id: taskListId } },
+        order: { position: 'DESC' },
+      });
+      position = maxPositionTask ? maxPositionTask.position + 1 : 0;
+    }
+
     const task = this.taskRepository.create({
       ...createTaskDto,
+      position,
       taskList: { id: taskListId },
     });
     return this.taskRepository.save(task);
@@ -66,18 +74,14 @@ export class TasksService {
     });
 
     if (!task) {
-      throw new NotFoundException(`Task with id '${id}' not found`);
+      throw new NotFoundException(`Task with  not found`);
     }
 
     return task;
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
-    const task = await this.taskRepository.findOne({ where: { id } });
-
-    if (!task) {
-      throw new NotFoundException(`Task with id '${id}' not found`);
-    }
+    const task = await this.findOne(id);
 
     // If the caller wants to move the task to a different list by status+boardId
     let taskListId = updateTaskDto.taskListId;
@@ -90,39 +94,32 @@ export class TasksService {
       });
 
       if (!taskList) {
-        throw new NotFoundException(
-          `Task list with status/name '${updateTaskDto.status}' not found on this board`,
-        );
+        throw new NotFoundException(`Task list  not found on this board`);
       }
 
       taskListId = taskList.id;
     }
 
-    const {
-      taskListId: _tid,
-      status: _s,
-      boardId: _bid,
-      ...fields
-    } = updateTaskDto;
-    await this.taskRepository.update(id, {
-      ...fields,
-      ...(taskListId ? { taskList: { id: taskListId } } : {}),
-    });
+    if (updateTaskDto.title !== undefined) task.title = updateTaskDto.title;
+    if (updateTaskDto.description !== undefined)
+      task.description = updateTaskDto.description;
+    if (updateTaskDto.position !== undefined)
+      task.position = updateTaskDto.position;
+    if (updateTaskDto.dueDate !== undefined)
+      task.dueDate = updateTaskDto.dueDate
+        ? new Date(updateTaskDto.dueDate)
+        : null;
+    if (updateTaskDto.priority !== undefined)
+      task.priority = updateTaskDto.priority;
+    if (taskListId) task.taskList = { id: taskListId } as any;
 
-    return this.taskRepository.findOne({
-      where: { id },
-      relations: { taskList: { board: true }, subtasks: true },
-    }) as Promise<Task>;
+    return this.taskRepository.save(task);
   }
 
   async remove(id: string): Promise<{ message: string }> {
-    const task = await this.taskRepository.findOne({ where: { id } });
-
-    if (!task) {
-      throw new NotFoundException(`Task with id '${id}' not found`);
-    }
+    const task = await this.findOne(id);
 
     await this.taskRepository.remove(task);
-    return { message: `Task '${task.title}' deleted successfully` };
+    return { message: `Task deleted successfully` };
   }
 }

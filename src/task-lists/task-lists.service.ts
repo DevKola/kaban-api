@@ -13,8 +13,19 @@ export class TaskListsService {
   ) {}
 
   async create(createTaskListDto: CreateTaskListDto): Promise<TaskList> {
+    let position = createTaskListDto.position;
+
+    if (position === undefined) {
+      const maxPositionList = await this.taskListRepository.findOne({
+        where: { board: { id: createTaskListDto.boardId } },
+        order: { position: 'DESC' },
+      });
+      position = maxPositionList ? maxPositionList.position + 1 : 0;
+    }
+
     const list = this.taskListRepository.create({
       ...createTaskListDto,
+      position,
       board: { id: createTaskListDto.boardId },
     });
     return this.taskListRepository.save(list);
@@ -34,7 +45,7 @@ export class TaskListsService {
     });
 
     if (!list) {
-      throw new NotFoundException(`Task list with id '${id}' not found`);
+      throw new NotFoundException(`Task list with not found`);
     }
 
     return list;
@@ -44,26 +55,20 @@ export class TaskListsService {
     id: string,
     updateTaskListDto: UpdateTaskListDto,
   ): Promise<TaskList> {
-    const list = await this.taskListRepository.findOne({ where: { id } });
+    const list = await this.findOne(id);
 
-    if (!list) {
-      throw new NotFoundException(`Task list with id '${id}' not found`);
+    if (updateTaskListDto.name !== undefined) {
+      list.name = updateTaskListDto.name;
+    }
+    if (updateTaskListDto.position !== undefined) {
+      list.position = updateTaskListDto.position;
     }
 
-    const { boardId: _bid, ...fieldsToUpdate } = updateTaskListDto;
-    await this.taskListRepository.update(id, fieldsToUpdate);
-    return this.taskListRepository.findOne({
-      where: { id },
-      relations: { board: true, tasks: true },
-    }) as Promise<TaskList>;
+    return this.taskListRepository.save(list);
   }
 
   async remove(id: string): Promise<{ message: string }> {
-    const list = await this.taskListRepository.findOne({ where: { id } });
-
-    if (!list) {
-      throw new NotFoundException(`Task list with id '${id}' not found`);
-    }
+    const list = await this.findOne(id);
 
     await this.taskListRepository.remove(list);
     return { message: `Task list '${list.name}' deleted successfully` };

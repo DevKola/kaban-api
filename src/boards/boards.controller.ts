@@ -12,27 +12,32 @@ import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { Board } from './entities/board.entity';
+import { ResponseMessage } from '../common/decorators/response-message.decorator';
 
 @Controller('boards')
 export class BoardsController {
   constructor(private readonly boardsService: BoardsService) {}
 
   @Post()
+  @ResponseMessage('Board created successfully')
   create(@Body() createBoardDto: CreateBoardDto): Promise<Board> {
     return this.boardsService.create(createBoardDto);
   }
 
   @Get()
+  @ResponseMessage('Boards retrieved successfully')
   findAll(): Promise<Board[]> {
     return this.boardsService.findAll();
   }
 
   @Get(':id')
+  @ResponseMessage('Board retrieved successfully')
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Board> {
     return this.boardsService.findOne(id);
   }
 
   @Patch(':id')
+  @ResponseMessage('Board updated successfully')
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateBoardDto: UpdateBoardDto,
@@ -41,9 +46,8 @@ export class BoardsController {
   }
 
   @Delete(':id')
-  remove(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<{ message: string }> {
+  @ResponseMessage('Board deleted successfully')
+  remove(@Param('id', ParseUUIDPipe) id: string): Promise<{ message: string }> {
     return this.boardsService.remove(id);
   }
 }
