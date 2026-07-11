@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateTaskListDto } from './dto/create-task-list.dto';
@@ -12,23 +12,60 @@ export class TaskListsService {
     private readonly taskListRepository: Repository<TaskList>,
   ) {}
 
-  create(createTaskListDto: CreateTaskListDto) {
-    return 'This action adds a new taskList';
+  async create(createTaskListDto: CreateTaskListDto): Promise<TaskList> {
+    const list = this.taskListRepository.create({
+      ...createTaskListDto,
+      board: { id: createTaskListDto.boardId },
+    });
+    return this.taskListRepository.save(list);
   }
 
-  findAll() {
-    return `This action returns all taskLists`;
+  async findAll(): Promise<TaskList[]> {
+    return this.taskListRepository.find({
+      relations: { board: true, tasks: { subtasks: true } },
+      order: { position: 'ASC', createdAt: 'ASC' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} taskList`;
+  async findOne(id: string): Promise<TaskList> {
+    const list = await this.taskListRepository.findOne({
+      where: { id },
+      relations: { board: true, tasks: { subtasks: true } },
+    });
+
+    if (!list) {
+      throw new NotFoundException(`Task list with id '${id}' not found`);
+    }
+
+    return list;
   }
 
-  update(id: number, updateTaskListDto: UpdateTaskListDto) {
-    return `This action updates a #${id} taskList`;
+  async update(
+    id: string,
+    updateTaskListDto: UpdateTaskListDto,
+  ): Promise<TaskList> {
+    const list = await this.taskListRepository.findOne({ where: { id } });
+
+    if (!list) {
+      throw new NotFoundException(`Task list with id '${id}' not found`);
+    }
+
+    const { boardId: _bid, ...fieldsToUpdate } = updateTaskListDto;
+    await this.taskListRepository.update(id, fieldsToUpdate);
+    return this.taskListRepository.findOne({
+      where: { id },
+      relations: { board: true, tasks: true },
+    }) as Promise<TaskList>;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} taskList`;
+  async remove(id: string): Promise<{ message: string }> {
+    const list = await this.taskListRepository.findOne({ where: { id } });
+
+    if (!list) {
+      throw new NotFoundException(`Task list with id '${id}' not found`);
+    }
+
+    await this.taskListRepository.remove(list);
+    return { message: `Task list '${list.name}' deleted successfully` };
   }
 }
