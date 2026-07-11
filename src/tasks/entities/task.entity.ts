@@ -40,6 +40,7 @@ export class Task {
 
   @ManyToOne(() => TaskList, (taskList) => taskList.tasks, {
     onDelete: 'CASCADE',
+    nullable: false,
   })
   taskList: TaskList;
 

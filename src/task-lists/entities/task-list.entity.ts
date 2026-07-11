@@ -15,10 +15,10 @@ export class TaskList {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', nullable: false })
+  @Column({ type: 'varchar', nullable: false, unique: true })
   name: string;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: 'int' })
   position: number;
 
   @OneToMany(() => Task, (task) => task.taskList, { cascade: true })
@@ -26,7 +26,7 @@ export class TaskList {
 
   @ManyToOne(() => Board, (board) => board.taskLists, {
     onDelete: 'CASCADE',
-    nullable: true,
+    nullable: false,
   })
   board: Board;
 
