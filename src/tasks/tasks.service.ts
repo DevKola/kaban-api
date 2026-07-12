@@ -111,7 +111,7 @@ export class TasksService {
         : null;
     if (updateTaskDto.priority !== undefined)
       task.priority = updateTaskDto.priority;
-    if (taskListId) task.taskList = { id: taskListId } as any;
+    if (taskListId) task.taskList = { id: taskListId } as TaskList;
 
     return this.taskRepository.save(task);
   }
