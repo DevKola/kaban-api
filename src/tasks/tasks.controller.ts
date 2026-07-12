@@ -47,9 +47,7 @@ export class TasksController {
 
   @Delete(':id')
   @ResponseMessage('Task deleted successfully')
-  remove(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<{ message: string }> {
+  remove(@Param('id', ParseUUIDPipe) id: string): Promise<{ message: string }> {
     return this.tasksService.remove(id);
   }
 }

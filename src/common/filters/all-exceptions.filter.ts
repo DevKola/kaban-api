@@ -15,7 +15,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
 
     let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
@@ -32,7 +31,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message =
           (resp['message'] as string) || (resp['error'] as string) || message;
 
-        // class-validator sends an array of errors; expose them
         if (Array.isArray(resp['message'])) {
           errors = resp['message'];
           message = 'Validation failed';
