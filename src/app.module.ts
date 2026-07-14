@@ -8,6 +8,7 @@ import { TaskListsModule } from './task-lists/task-lists.module';
 import { BoardsModule } from './boards/boards.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import environmentValidation from './config/environment.validation';
@@ -41,6 +42,7 @@ const ENV = process.env.NODE_ENV;
         database: configService.get<string>('database.name'),
       }),
     }),
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [
